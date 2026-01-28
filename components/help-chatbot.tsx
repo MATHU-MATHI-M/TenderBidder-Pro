@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  MessageCircle, 
-  X, 
-  Send, 
-  Bot, 
-  User, 
+import {
+  MessageCircle,
+  X,
+  Send,
+  Bot,
+  User,
   Loader2,
   HelpCircle,
   Building2,
@@ -20,7 +20,7 @@ import {
   TrendingUp,
   Shield
 } from "lucide-react"
-import { COHERE_API_KEY, COHERE_API_URL, SYSTEM_PROMPT, QUICK_QUESTIONS } from "@/lib/chatbot-config"
+import { GEMINI_API_KEY, GEMINI_API_URL, SYSTEM_PROMPT, QUICK_QUESTIONS } from "@/lib/chatbot-config"
 
 interface Message {
   id: string
@@ -43,7 +43,7 @@ const quickQuestions: QuickQuestion[] = [
     icon: <Building2 className="h-4 w-4" />
   },
   {
-    id: "2", 
+    id: "2",
     text: "What are the pricing plans?",
     icon: <TrendingUp className="h-4 w-4" />
   },
@@ -134,28 +134,33 @@ export default function HelpChatbot() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(COHERE_API_URL, {
+      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${COHERE_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: text.trim(),
-          preamble: SYSTEM_PROMPT,
-          model: "command-r-plus",
-          temperature: 0.7,
-          max_tokens: 1000,
-          stream: false
+          contents: [{
+            parts: [{
+              text: `${SYSTEM_PROMPT}\n\nUser: ${text.trim()}\n\nAssistant:`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000,
+          }
         })
       })
 
       if (!response.ok) {
-        throw new Error('Failed to get response from Cohere')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Gemini API Error:', errorData)
+        throw new Error(`Gemini API returned ${response.status}`)
       }
 
       const data = await response.json()
-      const botResponse = data.text || "I'm sorry, I couldn't process your request. Please try again or contact our support team."
+      const botResponse = data.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "I'm sorry, I couldn't process your request. Please try again or contact our support team."
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -250,11 +255,10 @@ export default function HelpChatbot() {
                     className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.sender === 'user'
-                          ? 'bg-primary text-white'
-                          : 'bg-gray-100 text-gray-900'
-                      }`}
+                      className={`max-w-[80%] rounded-lg p-3 ${message.sender === 'user'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-900'
+                        }`}
                     >
                       <div className="flex items-start space-x-2">
                         {message.sender === 'bot' && (
@@ -263,9 +267,9 @@ export default function HelpChatbot() {
                         <div className="flex-1">
                           <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                           <p className="text-xs opacity-70 mt-1">
-                            {message.timestamp.toLocaleTimeString([], { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
+                            {message.timestamp.toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit'
                             })}
                           </p>
                         </div>
@@ -276,7 +280,7 @@ export default function HelpChatbot() {
                     </div>
                   </div>
                 ))}
-                
+
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
@@ -288,7 +292,7 @@ export default function HelpChatbot() {
                     </div>
                   </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>

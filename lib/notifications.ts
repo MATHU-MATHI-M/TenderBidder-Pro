@@ -1,5 +1,5 @@
 import { getDatabase } from './mongodb'
-import { sendEmail } from './email'
+import { sendEmail } from "./email"
 
 export type NotificationType = 
   | 'PROJECT_CREATED'

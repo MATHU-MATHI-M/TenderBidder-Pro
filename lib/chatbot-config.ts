@@ -1,5 +1,5 @@
-export const COHERE_API_KEY = process.env.COHERE_API_KEY || "grq7KQ5LsX3sWYo4cZEaN8iYwv7HYm80zbWk588A"
-export const COHERE_API_URL = process.env.COHERE_API_URL || "https://api.cohere.ai/v1/chat"
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDioXH3xQFXxsjMGE3RJQVFrQgkVz9DLFA"
+export const GEMINI_API_URL = process.env.GEMINI_API_URL || "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
 export const SYSTEM_PROMPT = `You are a helpful customer support assistant for TenderChain, a blockchain and AI-powered tender management platform. 
 
@@ -140,7 +140,7 @@ export const QUICK_QUESTIONS = [
     category: "general"
   },
   {
-    id: "2", 
+    id: "2",
     text: "What are the pricing plans?",
     category: "pricing"
   },
@@ -207,4 +207,4 @@ export const FAQ_DATA = {
       answer: "AI considers capacity (ongoing projects, employee count, available capacity), financial stability, risk assessment, bid amount analysis, and proposal quality to provide comprehensive evaluation and ranking."
     }
   ]
-} 
+}
