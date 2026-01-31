@@ -23,21 +23,21 @@ export async function GET(
     }
 
     const [type, entityId, filename] = params.path
-    
+
     if (!type || !entityId || !filename) {
       return NextResponse.json({ error: "Invalid file path" }, { status: 400 })
     }
 
     // Verify user has access to this file
     const db = await getDatabase()
-    
+
     if (type === "project") {
       // Check if user is the tender who created the project or a bidder viewing the project
       const project = await db.collection("projects").findOne({ _id: new ObjectId(entityId) })
       if (!project) {
         return NextResponse.json({ error: "Project not found" }, { status: 404 })
       }
-      
+
       // Allow access if user is the tender who created it or any authenticated bidder
       if (payload.userType === "tender" && project.tenderId !== payload.userId) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 })
@@ -48,12 +48,12 @@ export async function GET(
       if (!bid) {
         return NextResponse.json({ error: "Proposal not found" }, { status: 404 })
       }
-      
+
       const project = await db.collection("projects").findOne({ _id: bid.projectId })
       if (!project) {
         return NextResponse.json({ error: "Project not found" }, { status: 404 })
       }
-      
+
       // Allow access if user is the tender who owns the project or the bidder who submitted the proposal
       if (payload.userType === "tender" && project.tenderId !== payload.userId) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 })
@@ -67,14 +67,23 @@ export async function GET(
 
     // Construct file path
     const filepath = join(process.cwd(), "uploads", type, entityId, filename)
-    
+
+    console.log("DEBUG: Attempting to download file:", {
+      type,
+      entityId,
+      filename,
+      filepath,
+      exists: existsSync(filepath)
+    })
+
     if (!existsSync(filepath)) {
+      console.error("File not found at path:", filepath)
       return NextResponse.json({ error: "File not found" }, { status: 404 })
     }
 
     // Read and return file
     const fileBuffer = await readFile(filepath)
-    
+
     // Determine content type based on file extension
     const getContentType = (filename: string) => {
       const ext = filename.toLowerCase().split('.').pop()
@@ -92,7 +101,7 @@ export async function GET(
     }
 
     const contentType = getContentType(filename)
-    
+
     return new NextResponse(fileBuffer, {
       headers: {
         'Content-Type': contentType,

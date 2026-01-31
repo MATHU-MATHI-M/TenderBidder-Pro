@@ -341,7 +341,7 @@ export default function HelpChatbot() {
               </Button>
             </form>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              Powered by AI • Your data is secure
+              Powered by Mathu • Your data is secure
             </p>
           </div>
         </div>

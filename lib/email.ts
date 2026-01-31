@@ -1,17 +1,19 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-const USE_MOCK_EMAIL = process.env.USE_MOCK_EMAIL === 'true'
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Create reusable transporter object using the default SMTP transport
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
+// Resend free tier only allows sending to verified email
+// In development, redirect all emails to verified address
+const VERIFIED_EMAIL = 'mathu9147@gmail.com'
+const isDevelopment = process.env.NODE_ENV !== 'production'
+
+function getEmailRecipient(intendedEmail: string): string {
+  if (isDevelopment) {
+    console.log(`🔄 DEV MODE: Redirecting email from ${intendedEmail} to ${VERIFIED_EMAIL}`)
+    return VERIFIED_EMAIL
+  }
+  return intendedEmail
+}
 
 export async function sendVerificationEmail(
   email: string,
@@ -24,30 +26,38 @@ export async function sendVerificationEmail(
   console.log("📧 Sending verification email to:", email)
   console.log("🔗 Verification URL:", verificationUrl)
 
-  if (USE_MOCK_EMAIL) {
-    console.log("⚠️ Mock Email Mode: Skipping SMTP call")
-    return
-  }
+  const actualRecipient = getEmailRecipient(email)
+  const devNotice = isDevelopment && actualRecipient !== email
+    ? `<div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin-bottom: 16px;">
+         <strong>🔧 DEV MODE:</strong> This email was intended for <strong>${email}</strong>
+       </div>`
+    : ''
 
   try {
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.EMAIL_FROM, // Fallback
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: 'TenderChain <onboarding@resend.dev>',
+      to: actualRecipient,
       subject: "Verify your email - TenderChain",
       html: `
+        ${devNotice}
         <h2>Welcome to TenderChain</h2>
         <p>Hello <strong>${companyName}</strong>,</p>
         <p>Please verify your email by clicking below:</p>
-        <a href="${verificationUrl}">Verify Email</a>
-        <p>This link expires in 24 hours.</p>
+        <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Verify Email</a>
+        <p>Or copy and paste this link in your browser:</p>
+        <p style="color: #6B7280; font-size: 14px;">${verificationUrl}</p>
+        <p style="color: #9CA3AF; font-size: 12px; margin-top: 24px;">This link expires in 24 hours.</p>
       `,
     })
 
-    console.log("✅ Verification email sent via SMTP:", info.messageId)
+    if (error) {
+      console.error("❌ Resend API error:", error)
+      throw error
+    }
+
+    console.log("✅ Verification email sent via Resend:", data?.id)
   } catch (error) {
-    console.error("❌ Failed to send SMTP email:", error)
-    // Don't throw here if you want to fail gracefully in UI, 
-    // but throwing helps debug connectivity.
+    console.error("❌ Failed to send email via Resend:", error)
     throw error
   }
 }
@@ -56,28 +66,31 @@ export async function sendConfirmationEmail(
   email: string,
   companyName: string
 ) {
-  if (USE_MOCK_EMAIL) {
-    console.log(`⚠️ Mock Email Mode: Sending confirmation to ${email}`)
-    return
-  }
+  const actualRecipient = getEmailRecipient(email)
 
   try {
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.EMAIL_FROM,
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: 'TenderChain <onboarding@resend.dev>',
+      to: actualRecipient,
       subject: "Email verified - TenderChain",
       html: `
         <h2>🎉 Email Verified</h2>
         <p>Hello <strong>${companyName}</strong>,</p>
         <p>Your email has been successfully verified.</p>
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/auth/signin">
-          Sign in
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/auth/signin" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+          Sign in to TenderChain
         </a>
       `,
     })
-    console.log("✅ Confirmation email sent via SMTP")
+
+    if (error) {
+      console.error("❌ Resend API error:", error)
+      return
+    }
+
+    console.log("✅ Confirmation email sent via Resend:", data?.id)
   } catch (error) {
-    console.error("❌ Failed to send SMTP email:", error)
+    console.error("❌ Failed to send confirmation email:", error)
   }
 }
 
@@ -90,24 +103,26 @@ export async function sendEmail({
   subject: string
   html: string
 }) {
-  if (USE_MOCK_EMAIL) {
-    console.log(`⚠️ Mock Email Mode: Sending generic email to ${to}`)
-    console.log(`Subject: ${subject}`)
-    return { id: 'mock-id' }
-  }
+  const actualRecipient = getEmailRecipient(to)
 
   try {
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.EMAIL_FROM,
-      to,
+    const { data, error } = await resend.emails.send({
+      from: 'TenderChain <onboarding@resend.dev>',
+      to: actualRecipient,
       subject,
       html,
     })
 
-    console.log("✅ Email sent via SMTP to:", to)
-    return info
+    if (error) {
+      console.error("❌ Resend API error:", error)
+      throw error
+    }
+
+    console.log("✅ Email sent via Resend to:", to)
+    return { id: data?.id }
   } catch (error) {
-    console.error("❌ Failed to send SMTP email:", error)
+    console.error("❌ Failed to send email via Resend:", error)
     throw error
   }
 }
+

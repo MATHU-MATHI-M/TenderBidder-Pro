@@ -102,7 +102,9 @@ export default function NewProjectPage() {
           uploadFormData.append("files", file)
         })
         uploadFormData.append("type", "project")
-        uploadFormData.append("entityId", projectData.projectId)
+        uploadFormData.append("entityId", String(projectData.projectId))
+
+        console.log("Uploading files for project:", projectData.projectId)
 
         const uploadResponse = await fetch("/api/files/upload", {
           method: "POST",
@@ -121,7 +123,7 @@ export default function NewProjectPage() {
           })
         } else {
           const uploadData = await uploadResponse.json()
-          
+
           // Update project with file information
           await fetch(`/api/projects/${projectData.projectId}`, {
             method: "PATCH",

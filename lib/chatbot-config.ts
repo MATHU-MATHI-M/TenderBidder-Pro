@@ -1,6 +1,5 @@
-export const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDioXH3xQFXxsjMGE3RJQVFrQgkVz9DLFA"
-export const GEMINI_API_URL = process.env.GEMINI_API_URL || "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
-
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+export const GEMINI_API_URL = process.env.GEMINI_API_URL 
 export const SYSTEM_PROMPT = `You are a helpful customer support assistant for TenderChain, a blockchain and AI-powered tender management platform. 
 
 COMPANY OVERVIEW:

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
@@ -11,42 +11,60 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building2, ArrowLeft, Users, Calendar, MapPin, DollarSign, Clock, FileText, Settings } from "lucide-react"
 import Link from "next/link"
 
-// Mock project data
-const mockProject = {
-  id: "1",
-  title: "Office Complex Construction",
-  description:
-    "Modern 10-story office building with parking facility. This project involves the construction of a state-of-the-art commercial complex featuring sustainable design elements, advanced HVAC systems, and modern amenities.",
-  budget: "$2,500,000",
-  location: "Downtown District",
-  deadline: "2024-02-15",
-  status: "open",
-  category: "Commercial Construction",
-  duration: "18 months",
-  bidCount: 12,
-  progress: 0,
-  postedDate: "2024-01-10",
-  companyName: "BuildCorp Ltd",
-  specifications:
-    "The building will feature reinforced concrete structure, glass facade, energy-efficient systems, underground parking for 200 vehicles, and LEED Gold certification requirements.",
-  requirements: ["Construction License", "Insurance Certificate", "Previous Experience", "Safety Certification"],
-}
-
 export default function ProjectDetailsPage() {
   const { user } = useAuth()
   const params = useParams()
   const router = useRouter()
-  const [project, setProject] = useState(mockProject)
+  const [project, setProject] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
+
+  // Fetch project data from API
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const token = localStorage.getItem("auth_token")
+        if (!token) {
+          router.push("/auth/signin")
+          return
+        }
+
+        const response = await fetch(`/api/projects/${params.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setProject(data.project)
+        } else {
+          console.error("Failed to fetch project")
+          router.push("/tender/dashboard")
+        }
+      } catch (error) {
+        console.error("Error fetching project:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchProject()
+    }
+  }, [params.id, router])
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "active":
       case "open":
         return "bg-green-500"
       case "in-progress":
         return "bg-blue-500"
       case "closed":
         return "bg-gray-500"
+      case "awarded":
+        return "bg-purple-500"
       default:
         return "bg-gray-500"
     }
@@ -54,20 +72,59 @@ export default function ProjectDetailsPage() {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case "active":
       case "open":
         return "Open for Bids"
       case "in-progress":
         return "In Progress"
       case "closed":
         return "Closed"
+      case "awarded":
+        return "Awarded"
       default:
         return status
     }
   }
 
-  const handleStopBids = () => {
-    setProject({ ...project, status: "closed" })
-    // In real app, this would call your API
+  const handleStopBids = async () => {
+    try {
+      const token = localStorage.getItem("auth_token")
+      const response = await fetch(`/api/projects/${params.id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "closed" }),
+      })
+
+      if (response.ok) {
+        setProject({ ...project, status: "closed" })
+      }
+    } catch (error) {
+      console.error("Error updating project status:", error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Project not found</h2>
+          <Link href="/tender/dashboard">
+            <Button>Back to Dashboard</Button>
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -110,10 +167,10 @@ export default function ProjectDetailsPage() {
                     <span>{project.title}</span>
                     <Badge className={getStatusColor(project.status)}>{getStatusText(project.status)}</Badge>
                   </CardTitle>
-                  <CardDescription>Posted on {project.postedDate}</CardDescription>
+                  <CardDescription>Posted on {new Date(project.createdAt).toLocaleDateString()}</CardDescription>
                 </div>
                 <div className="flex space-x-2">
-                  {project.status === "open" && (
+                  {(project.status === "open" || project.status === "active") && (
                     <Button variant="destructive" onClick={handleStopBids}>
                       Stop Accepting Bids
                     </Button>
@@ -133,7 +190,7 @@ export default function ProjectDetailsPage() {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Budget</p>
-                    <p className="text-sm text-muted-foreground">{project.budget}</p>
+                    <p className="text-sm text-muted-foreground">₹{project.budget?.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -147,14 +204,14 @@ export default function ProjectDetailsPage() {
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Deadline</p>
-                    <p className="text-sm text-muted-foreground">{project.deadline}</p>
+                    <p className="text-sm text-muted-foreground">{new Date(project.deadline).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Duration</p>
-                    <p className="text-sm text-muted-foreground">{project.duration}</p>
+                    <p className="text-sm text-muted-foreground">{project.duration || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -238,7 +295,7 @@ export default function ProjectDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {project.requirements.map((req, index) => (
+                    {project.requirements?.map((req: string, index: number) => (
                       <div key={index} className="flex items-center space-x-2 p-3 border rounded-lg">
                         <FileText className="h-4 w-4 text-primary" />
                         <span>{req}</span>
@@ -259,7 +316,7 @@ export default function ProjectDetailsPage() {
                     <div className="flex items-center space-x-3 p-3 border-l-4 border-primary">
                       <div className="text-sm">
                         <p className="font-medium">Project created</p>
-                        <p className="text-muted-foreground">Posted on {project.postedDate}</p>
+                        <p className="text-muted-foreground">Posted on {new Date(project.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3 p-3 border-l-4 border-blue-500">

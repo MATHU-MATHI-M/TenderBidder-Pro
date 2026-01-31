@@ -30,14 +30,14 @@ export async function comparePassword(password: string, hashedPassword: string):
 }
 
 export function generateVerificationToken(): string {
-  return jwt.sign({ purpose: "email-verification" }, JWT_SECRET, { expiresIn: "24h" })
+  // Generate a random token using crypto instead of JWT
+  // This ensures the token is unique and doesn't change on each call
+  const crypto = require('crypto')
+  return crypto.randomBytes(32).toString('hex')
 }
 
 export function verifyEmailToken(token: string): boolean {
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
-    return decoded.purpose === "email-verification"
-  } catch {
-    return false
-  }
+  // Since we're using random tokens now, we just need to verify it's a valid hex string
+  // The actual verification happens by checking if it exists in the database
+  return /^[a-f0-9]{64}$/.test(token)
 }

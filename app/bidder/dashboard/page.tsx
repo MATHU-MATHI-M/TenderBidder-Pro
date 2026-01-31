@@ -68,7 +68,7 @@ export default function BidderDashboard() {
       try {
         setLoadingTenders(true)
         setLoadingBids(true)
-        
+
         // Fetch tenders
         const token = localStorage.getItem("auth_token")
         if (!token) {
@@ -81,7 +81,7 @@ export default function BidderDashboard() {
             Authorization: `Bearer ${token}`
           }
         })
-        
+
         if (!response.ok) {
           if (response.status === 401) {
             // Token expired or invalid
@@ -90,7 +90,7 @@ export default function BidderDashboard() {
           }
           throw new Error(`Failed to fetch projects: ${response.statusText}`)
         }
-        
+
         const data = await response.json()
         const projects = data.projects || []
         setTenders(projects)
@@ -102,7 +102,7 @@ export default function BidderDashboard() {
             Authorization: `Bearer ${token}`,
           },
         })
-        
+
         if (!bidsResponse.ok) {
           if (bidsResponse.status === 401) {
             // Token expired or invalid
@@ -111,7 +111,7 @@ export default function BidderDashboard() {
           }
           throw new Error(`Failed to fetch bids: ${bidsResponse.statusText}`)
         }
-        
+
         const bidsData = await bidsResponse.json()
         setBids(bidsData.bids || [])
       } catch (error) {
@@ -129,12 +129,12 @@ export default function BidderDashboard() {
   // Check bid status for each project
   const checkBidStatuses = async (projects: any[]) => {
     if (!user) return
-    
+
     const token = localStorage.getItem("auth_token")
     if (!token) return
 
     const statuses: any = {}
-    
+
     for (const project of projects) {
       try {
         const response = await fetch(`/api/bids?projectId=${project._id}&bidderId=${user.id}`, {
@@ -142,7 +142,7 @@ export default function BidderDashboard() {
             Authorization: `Bearer ${token}`,
           },
         })
-        
+
         if (response.ok) {
           const data = await response.json()
           if (data.bids && data.bids.length > 0) {
@@ -153,7 +153,7 @@ export default function BidderDashboard() {
         console.error(`Error checking bid status for project ${project._id}:`, error)
       }
     }
-    
+
     setBidStatuses(statuses)
   }
 
@@ -280,31 +280,31 @@ export default function BidderDashboard() {
   // Filter and search functions
   const filteredTenders = (tenders || []).filter((tender: any) => {
     if (!tender) return false
-    
-    const matchesSearch = searchTerm === "" || 
+
+    const matchesSearch = searchTerm === "" ||
       (tender.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tender.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tender.tenderCompany?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tender.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tender.location?.toLowerCase().includes(searchTerm.toLowerCase()))
-    
+        tender.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tender.tenderCompany?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tender.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tender.location?.toLowerCase().includes(searchTerm.toLowerCase()))
+
     const matchesCategory = selectedCategory === "all" || tender.category === selectedCategory
     const matchesStatus = selectedStatus === "all" || tender.status === selectedStatus
-    
-    return matchesSearch && matchesCategory && matchesStatus && 
-           (tender.status === "active" || tender.status === "open")
+
+    return matchesSearch && matchesCategory && matchesStatus &&
+      (tender.status === "active" || tender.status === "open")
   })
 
   const filteredBids = (bids || []).filter((bid: any) => {
     if (!bid || !bid.project) return false
-    
-    const matchesSearch = searchTerm === "" || 
+
+    const matchesSearch = searchTerm === "" ||
       (bid.project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bid.project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bid.project.category?.toLowerCase().includes(searchTerm.toLowerCase()))
-    
+        bid.project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bid.project.category?.toLowerCase().includes(searchTerm.toLowerCase()))
+
     const matchesStatus = selectedStatus === "all" || bid.status === selectedStatus
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -322,10 +322,10 @@ export default function BidderDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-    <div className="ml-9 mt-4 mb-2">
-  <h1 className="text-2xl font-bold">Welcome, {user?.companyName || "User"}</h1>
-  <p className="text-muted-foreground">Welcome to your Bidder Dashboard</p>
-</div>
+      <div className="ml-9 mt-4 mb-2">
+        <h1 className="text-2xl font-bold">Welcome, {user?.companyName || "User"}</h1>
+        <p className="text-muted-foreground">Welcome to your Bidder Dashboard</p>
+      </div>
 
 
       <div className="container mx-auto px-4 py-8">
@@ -371,7 +371,7 @@ export default function BidderDashboard() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$4.1M</div>
+                <div className="text-2xl font-bold">₹{bids.reduce((sum: number, bid: any) => sum + Number(bid.bidAmount || 0), 0).toLocaleString('en-IN')}</div>
                 <p className="text-xs text-muted-foreground">Submitted bids value</p>
               </CardContent>
             </Card>
@@ -479,13 +479,13 @@ export default function BidderDashboard() {
                   ) : filteredTenders.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">
-                        {searchTerm || selectedCategory !== "all" || selectedStatus !== "all" 
-                          ? "No tenders match your search criteria." 
+                        {searchTerm || selectedCategory !== "all" || selectedStatus !== "all"
+                          ? "No tenders match your search criteria."
                           : "No active tenders available at the moment."}
                       </p>
                       {(searchTerm || selectedCategory !== "all" || selectedStatus !== "all") && (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="mt-2"
                           onClick={() => {
                             setSearchTerm("")
@@ -500,7 +500,7 @@ export default function BidderDashboard() {
                   ) : (
                     <div className="space-y-4">
                       {filteredTenders.map((tender: any) => (
-                                              <div key={tender._id} className="border rounded-lg p-4">
+                        <div key={tender._id} className="border rounded-lg p-4">
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex-1">
                               <h3 className="font-semibold text-lg">{tender.title}</h3>
@@ -513,7 +513,7 @@ export default function BidderDashboard() {
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                             <div>
                               <p className="text-sm font-medium">Budget</p>
-                              <p className="text-lg font-bold text-primary">${tender.budget?.toLocaleString()}</p>
+                              <p className="text-lg font-bold text-primary">₹{tender.budget?.toLocaleString('en-IN')}</p>
                             </div>
                             <div>
                               <p className="text-sm font-medium">Deadline</p>
@@ -529,38 +529,38 @@ export default function BidderDashboard() {
                             </div>
                           </div>
 
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {tender.status === "closing-soon" ? "Closes in 2 days" : "Open for bidding"}
-                            </span>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Link href={`/bidder/tenders/${tender._id}`}>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </Button>
-                            </Link>
-                            {bidStatuses[tender._id] ? (
-                              <Badge className={`${getBidStatusColor(bidStatuses[tender._id])} text-white px-3 py-1`}>
-                                {getBidStatusText(bidStatuses[tender._id])}
-                              </Badge>
-                            ) : (tender.status === "open" || tender.status === "active") ? (
-                              <Link href={`/bidder/tenders/${tender._id}/submit-bid`}>
-                                <Button size="sm">
-                                  <FileText className="h-4 w-4 mr-2" />
-                                  Submit Bid
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                {tender.status === "closing-soon" ? "Closes in 2 days" : "Open for bidding"}
+                              </span>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Link href={`/bidder/tenders/${tender._id}`}>
+                                <Button variant="outline" size="sm">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
                                 </Button>
                               </Link>
-                            ) : null}
+                              {bidStatuses[tender._id] ? (
+                                <Badge className={`${getBidStatusColor(bidStatuses[tender._id])} text-white px-3 py-1`}>
+                                  {getBidStatusText(bidStatuses[tender._id])}
+                                </Badge>
+                              ) : (tender.status === "open" || tender.status === "active") ? (
+                                <Link href={`/bidder/tenders/${tender._id}/submit-bid`}>
+                                  <Button size="sm">
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Submit Bid
+                                  </Button>
+                                </Link>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -606,13 +606,13 @@ export default function BidderDashboard() {
                   ) : filteredBids.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">
-                        {searchTerm || selectedStatus !== "all" 
-                          ? "No bids match your search criteria." 
+                        {searchTerm || selectedStatus !== "all"
+                          ? "No bids match your search criteria."
                           : "No bids submitted yet."}
                       </p>
                       {(searchTerm || selectedStatus !== "all") ? (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="mt-2"
                           onClick={() => {
                             setSearchTerm("")
@@ -632,7 +632,7 @@ export default function BidderDashboard() {
                   ) : (
                     <div className="space-y-4">
                       {filteredBids.map((bid: any) => (
-                                              <div key={bid._id} className="border rounded-lg p-4">
+                        <div key={bid._id} className="border rounded-lg p-4">
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="font-semibold">{bid.project?.title}</h3>
@@ -646,7 +646,7 @@ export default function BidderDashboard() {
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                               <p className="text-sm font-medium">Bid Amount</p>
-                              <p className="text-lg font-bold text-primary">${bid.bidAmount?.toLocaleString()}</p>
+                              <p className="text-lg font-bold text-primary">₹{bid.bidAmount?.toLocaleString('en-IN')}</p>
                             </div>
                             <div>
                               <p className="text-sm font-medium">AI Score</p>
@@ -661,28 +661,28 @@ export default function BidderDashboard() {
                                 {bid.status === "shortlisted"
                                   ? "Congratulations! You're shortlisted"
                                   : bid.status === "awarded"
-                                  ? "Congratulations! You won the bid"
-                                  : bid.status === "rejected"
-                                  ? "Bid was not selected"
-                                  : bid.status === "submitted"
-                                  ? "Under evaluation"
-                                  : getBidStatusText(bid.status)}
+                                    ? "Congratulations! You won the bid"
+                                    : bid.status === "rejected"
+                                      ? "Bid was not selected"
+                                      : bid.status === "submitted"
+                                        ? "Under evaluation"
+                                        : getBidStatusText(bid.status)}
                               </p>
                             </div>
                           </div>
 
-                        <div className="flex justify-end space-x-2">
-                          <Link href={`/bidder/bids/${bid._id}`}>
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </Button>
-                          </Link>
+                          <div className="flex justify-end space-x-2">
+                            <Link href={`/bidder/bids/${bid._id}`}>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

@@ -146,15 +146,15 @@ export default function TenderDashboard() {
   }
 
   return (
-  <div className="min-h-screen bg-background">
-     {/* Header */}
-    <div className="ml-9 mt-4 mb-2">
-  <h1 className="text-2xl font-bold">Welcome, {user?.companyName || "User"}</h1>
-  <p className="text-muted-foreground">Welcome to your Tender Dashboard</p>
-</div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="ml-9 mt-4 mb-2">
+        <h1 className="text-2xl font-bold">Welcome, {user?.companyName || "User"}</h1>
+        <p className="text-muted-foreground">Welcome to your Tender Dashboard</p>
+      </div>
 
       <div className="container mx-auto px-4 py-8">
-       
+
         <div className="space-y-6">
           {/* Verification Status Card */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -169,36 +169,36 @@ export default function TenderDashboard() {
                   <CardDescription>Manage your tenders and projects</CardDescription>
                 </CardHeader>
                 <Card className="col-span-3">
-  
-  <CardContent>
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Link href="/profile/edit">
-        <Button variant="outline" className="w-full justify-start space-x-2">
-          <User className="h-5 w-5" />
-          <span>Update Profile</span>
-        </Button>
-      </Link>
-      <Link href="/tender/reports">
-        <Button variant="outline" className="w-full justify-start space-x-2">
-          <FileText className="h-5 w-5" />
-          <span>View Report</span>
-        </Button>
-      </Link>
-      <Link href="/tender/settings">
-        <Button variant="outline" className="w-full justify-start space-x-2">
-          <SettingsIcon className="h-5 w-5" />
-          <span>Settings</span>
-        </Button>
-      </Link>
-      <Link href="/tender/achievements">
-        <Button variant="outline" className="w-full justify-start space-x-2">
-          <Medal className="h-5 w-5" />
-          <span>Achievements</span>
-        </Button>
-      </Link>
-    </div>
-  </CardContent>
-</Card>
+
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Link href="/profile/edit">
+                        <Button variant="outline" className="w-full justify-start space-x-2">
+                          <User className="h-5 w-5" />
+                          <span>Update Profile</span>
+                        </Button>
+                      </Link>
+                      <Link href="/tender/reports">
+                        <Button variant="outline" className="w-full justify-start space-x-2">
+                          <FileText className="h-5 w-5" />
+                          <span>View Report</span>
+                        </Button>
+                      </Link>
+                      <Link href="/tender/settings">
+                        <Button variant="outline" className="w-full justify-start space-x-2">
+                          <SettingsIcon className="h-5 w-5" />
+                          <span>Settings</span>
+                        </Button>
+                      </Link>
+                      <Link href="/tender/achievements">
+                        <Button variant="outline" className="w-full justify-start space-x-2">
+                          <Medal className="h-5 w-5" />
+                          <span>Achievements</span>
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
 
               </Card>
             </div>
@@ -237,7 +237,7 @@ export default function TenderDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ${(projects.reduce((sum: number, project: any) => sum + (project.budget || 0), 0) / 1000000).toFixed(1)}M
+                  ₹{projects.reduce((sum: number, project: any) => sum + Number(project.budget || 0), 0).toLocaleString('en-IN')}
                 </div>
                 <p className="text-xs text-muted-foreground">Combined project value</p>
               </CardContent>
@@ -312,7 +312,7 @@ export default function TenderDashboard() {
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                             <div>
                               <p className="text-sm font-medium">Budget</p>
-                              <p className="text-lg font-bold text-primary">${project.budget?.toLocaleString()}</p>
+                              <p className="text-lg font-bold text-primary">₹{project.budget?.toLocaleString('en-IN')}</p>
                             </div>
                             <div>
                               <p className="text-sm font-medium">Deadline</p>
@@ -332,7 +332,7 @@ export default function TenderDashboard() {
                             <div className="flex items-center space-x-2">
                               <Clock className="h-4 w-4 text-muted-foreground" />
                               <span className="text-sm text-muted-foreground">
-                                {project.status === "active" ? "Accepting bids" : "Bidding closed"}
+                                {(project.status === "awarded" || project.status === "closed") ? "Bidding closed" : "Accepting bids"}
                               </span>
                             </div>
                             <div className="flex space-x-2">
